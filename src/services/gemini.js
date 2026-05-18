@@ -15,7 +15,7 @@ function obtenerCliente() {
 async function llamarGemini(prompt, systemPrompt) {
   const cliente = obtenerCliente();
   const modelo = cliente.getGenerativeModel({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.5-flash',
     systemInstruction: systemPrompt,
     generationConfig: {
       temperature: 0.7,
