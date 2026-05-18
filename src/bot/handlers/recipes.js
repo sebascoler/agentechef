@@ -4,6 +4,7 @@ const { obtenerMenu, obtenerUsuario, obtenerReceta, guardarReceta } = require('.
 const { parsearJSON, validarReceta } = require('../../utils/parser');
 const { formatearReceta, generarIdReceta } = require('../../utils/thermomix');
 const { semanaISOActual, DIAS_ORDEN } = require('../../utils/dateHelper');
+const { replyMarkdownV2 } = require('../../utils/telegram');
 
 function construirPromptReceta(nombrePlato, personas, tieneThermomix) {
   return `Genera la receta completa de "${nombrePlato}" para ${personas} personas.
@@ -103,10 +104,7 @@ async function mostrarReceta(ctx, nombrePlato) {
   }
 
   const texto = formatearReceta(receta, perfil.tiene_thermomix || false);
-  await ctx.reply(texto, {
-    parse_mode: 'MarkdownV2',
-    disable_web_page_preview: true,
-  });
+  await replyMarkdownV2(ctx, texto, { disable_web_page_preview: true });
 }
 
 async function mostrarListaRecetas(ctx) {
@@ -159,12 +157,10 @@ async function mostrarListaRecetas(ctx) {
     botones.push(fila);
   }
 
-  await ctx.reply(
+  await replyMarkdownV2(
+    ctx,
     '📖 *Recetas de esta semana*\n\nElegí un plato para ver la receta completa:',
-    {
-      parse_mode: 'MarkdownV2',
-      ...Markup.inlineKeyboard(botones),
-    }
+    Markup.inlineKeyboard(botones)
   );
 }
 

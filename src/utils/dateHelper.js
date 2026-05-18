@@ -6,6 +6,9 @@ const ZONA_MADRID = 'Europe/Madrid';
 
 const DIAS_SEMANA = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
 
+/** Orden del menú semanal (lunes → domingo). */
+const DIAS_ORDEN = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+
 const NOMBRES_DIAS = {
   lunes: 'Lunes',
   martes: 'Martes',
@@ -106,4 +109,5 @@ module.exports = {
   nombreDia,
   fechaDeHoyFormateada,
   DIAS_SEMANA,
+  DIAS_ORDEN,
 };

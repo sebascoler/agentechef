@@ -1,10 +1,8 @@
 const { llamarLLMConJSON } = require('../../services/llm');
 const { guardarMenu, obtenerMenu, obtenerUsuario } = require('../../services/firebase');
 const { validarMenu } = require('../../utils/parser');
-const { semanaISOActual, formatearFechaSemana } = require('../../utils/dateHelper');
+const { semanaISOActual, formatearFechaSemana, DIAS_ORDEN } = require('../../utils/dateHelper');
 const { escapeMarkdownV2, replyMarkdownV2 } = require('../../utils/telegram');
-
-const DIAS_ORDEN = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
 
 const EMOJIS_DIAS = {
   lunes: '🟢',
