@@ -2,6 +2,7 @@ const { llamarLLMConJSON } = require('../../services/llm');
 const { guardarMenu, obtenerMenu, obtenerUsuario } = require('../../services/firebase');
 const { validarMenu } = require('../../utils/parser');
 const { semanaISOActual, formatearFechaSemana } = require('../../utils/dateHelper');
+const { escapeMarkdownV2, replyMarkdownV2 } = require('../../utils/telegram');
 
 const DIAS_ORDEN = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
 
@@ -71,7 +72,7 @@ Estructura:
 }
 
 function formatearMenu(menuData, semanaIso) {
-  const rango = formatearFechaSemana(semanaIso);
+  const rango = escapeMarkdownV2(formatearFechaSemana(semanaIso));
   const lineas = [`📅 *MENÚ SEMANA DEL ${rango}*`];
 
   for (const dia of DIAS_ORDEN) {
@@ -79,12 +80,12 @@ function formatearMenu(menuData, semanaIso) {
     if (!datos) continue;
 
     const emoji = EMOJIS_DIAS[dia] || '⭕';
-    const nombreDia = dia.charAt(0).toUpperCase() + dia.slice(1);
+    const nombreDia = escapeMarkdownV2(dia.charAt(0).toUpperCase() + dia.slice(1));
 
     lineas.push('');
     lineas.push(`${emoji} *${nombreDia.toUpperCase()}*`);
-    lineas.push(`  🍽️ Almuerzo: ${datos.almuerzo.nombre}`);
-    lineas.push(`  🌙 Cena: ${datos.cena.nombre}`);
+    lineas.push(`  🍽️ Almuerzo: ${escapeMarkdownV2(datos.almuerzo.nombre)}`);
+    lineas.push(`  🌙 Cena: ${escapeMarkdownV2(datos.cena.nombre)}`);
   }
 
   lineas.push('');
@@ -137,7 +138,7 @@ async function generarYEnviarMenu(ctx, chatId, perfil) {
 
   // Enviar menú al usuario
   const textoMenu = formatearMenu(menuData, semana);
-  await ctx.reply(textoMenu, { parse_mode: 'MarkdownV2' });
+  await replyMarkdownV2(ctx, textoMenu);
 }
 
 async function mostrarMenuActual(ctx) {
@@ -171,7 +172,7 @@ async function mostrarMenuActual(ctx) {
   }
 
   const textoMenu = formatearMenu(menu, semana);
-  await ctx.reply(textoMenu, { parse_mode: 'MarkdownV2' });
+  await replyMarkdownV2(ctx, textoMenu);
 }
 
 async function refinarMenu(ctx, mensajeUsuario) {
@@ -217,17 +218,13 @@ async function refinarMenu(ctx, mensajeUsuario) {
   // Mostrar cambios realizados
   const cambios = menuActualizado.cambios_realizados;
   if (cambios && cambios.length > 0) {
-    const textoCambios = cambios.map((c) => `\\- ${escapeMarkdown(c)}`).join('\n');
-    await ctx.reply(`*Cambios realizados:*\n${textoCambios}`, { parse_mode: 'MarkdownV2' });
+    const textoCambios = cambios.map((c) => `\\- ${escapeMarkdownV2(c)}`).join('\n');
+    await replyMarkdownV2(ctx, `*Cambios realizados:*\n${textoCambios}`);
   }
 
   // Mostrar menú actualizado
   const textoMenu = formatearMenu(menuActualizado, semana);
-  await ctx.reply(textoMenu, { parse_mode: 'MarkdownV2' });
-}
-
-function escapeMarkdown(texto) {
-  return texto.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
+  await replyMarkdownV2(ctx, textoMenu);
 }
 
 module.exports = {
