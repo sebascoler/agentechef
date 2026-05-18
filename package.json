@@ -1,0 +1,20 @@
+{
+  "name": "agentchef",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node api/webhook.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["telegram", "bot", "menu", "cocina", "thermomix"],
+  "author": "",
+  "license": "ISC",
+  "description": "Bot de Telegram para planificación de menú semanal familiar",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "dotenv": "^17.4.2",
+    "firebase-admin": "^13.10.0",
+    "openai": "^6.38.0",
+    "telegraf": "^4.16.3"
+  }
+}

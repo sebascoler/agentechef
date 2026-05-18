@@ -1,0 +1,15 @@
+# Dependencias
+node_modules/
+
+# Secretos — nunca subir
+.env
+.env.local
+*.pem
+
+# Credenciales Firebase (JSON del service account)
+*firebase*adminsdk*.json
+*-firebase-adminsdk-*.json
+
+# Sistema
+.DS_Store
+.vercel
