@@ -66,16 +66,59 @@ function parsearJSON(texto) {
   }
 }
 
-function validarMenu(datos) {
-  const diasEsperados = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
-  if (!datos.dias) throw new Error('El menú no contiene campo "dias"');
+const DIAS_MENU = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
 
-  for (const dia of diasEsperados) {
-    if (!datos.dias[dia]) throw new Error(`Falta el día "${dia}" en el menú`);
-    if (!datos.dias[dia].almuerzo) throw new Error(`Falta almuerzo en "${dia}"`);
-    if (!datos.dias[dia].cena) throw new Error(`Falta cena en "${dia}"`);
+const ALIAS_DIAS = {
+  lunes: 'lunes',
+  martes: 'martes',
+  miercoles: 'miercoles',
+  miércoles: 'miercoles',
+  jueves: 'jueves',
+  viernes: 'viernes',
+  sabado: 'sabado',
+  sábado: 'sabado',
+  domingo: 'domingo',
+};
+
+function quitarAcentos(texto) {
+  return texto.normalize('NFD').replace(/\p{M}/gu, '');
+}
+
+function normalizarMenu(datos) {
+  if (!datos || typeof datos !== 'object') {
+    throw new Error('El menú no es un objeto válido');
   }
-  return true;
+
+  if (!datos.dias || typeof datos.dias !== 'object') {
+    throw new Error('El menú no contiene campo "dias"');
+  }
+
+  const diasNormalizados = {};
+  for (const [clave, valor] of Object.entries(datos.dias)) {
+    const claveLimpia = quitarAcentos(String(clave).trim().toLowerCase());
+    const diaCanonico = ALIAS_DIAS[claveLimpia] || ALIAS_DIAS[clave.trim().toLowerCase()];
+    if (diaCanonico) {
+      diasNormalizados[diaCanonico] = valor;
+    }
+  }
+
+  return { ...datos, dias: diasNormalizados };
+}
+
+function validarMenu(datos) {
+  const normalizado = normalizarMenu(datos);
+  if (!normalizado.dias) throw new Error('El menú no contiene campo "dias"');
+
+  for (const dia of DIAS_MENU) {
+    if (!normalizado.dias[dia]) throw new Error(`Falta el día "${dia}" en el menú`);
+    if (!normalizado.dias[dia].almuerzo?.nombre) {
+      throw new Error(`Falta almuerzo válido en "${dia}"`);
+    }
+    if (!normalizado.dias[dia].cena?.nombre) {
+      throw new Error(`Falta cena válida en "${dia}"`);
+    }
+  }
+  return normalizado;
 }
 
 function validarListaCompra(datos) {
@@ -98,7 +141,9 @@ function validarReceta(datos) {
 
 module.exports = {
   parsearJSON,
+  normalizarMenu,
   validarMenu,
   validarListaCompra,
   validarReceta,
+  DIAS_MENU,
 };

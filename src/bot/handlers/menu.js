@@ -1,6 +1,6 @@
-const { llamarLLM } = require('../../services/llm');
+const { llamarLLMConJSON } = require('../../services/llm');
 const { guardarMenu, obtenerMenu, obtenerUsuario } = require('../../services/firebase');
-const { parsearJSON, validarMenu } = require('../../utils/parser');
+const { validarMenu } = require('../../utils/parser');
 const { semanaISOActual, formatearFechaSemana } = require('../../utils/dateHelper');
 
 const DIAS_ORDEN = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
@@ -30,22 +30,21 @@ REGLAS:
 - Variedad de tipos de cocina según las preferencias del usuario
 - Equilibrio nutricional a lo largo de la semana
 
-Responde ÚNICAMENTE con este JSON (sin markdown, sin texto adicional):
+Responde ÚNICAMENTE con JSON válido (sin markdown ni texto extra).
+Estructura obligatoria:
 {
   "semana": "${semanaISOActual()}",
   "dias": {
-    "lunes": {
-      "almuerzo": { "nombre": "string", "tiempo_estimado": 30 },
-      "cena": { "nombre": "string", "tiempo_estimado": 20 }
-    },
-    "martes": { "almuerzo": {}, "cena": {} },
-    "miercoles": { "almuerzo": {}, "cena": {} },
-    "jueves": { "almuerzo": {}, "cena": {} },
-    "viernes": { "almuerzo": {}, "cena": {} },
-    "sabado": { "almuerzo": {}, "cena": {} },
-    "domingo": { "almuerzo": {}, "cena": {} }
+    "lunes": { "almuerzo": { "nombre": "...", "tiempo_estimado": 30 }, "cena": { "nombre": "...", "tiempo_estimado": 20 } },
+    "martes": { "almuerzo": { "nombre": "...", "tiempo_estimado": 30 }, "cena": { "nombre": "...", "tiempo_estimado": 20 } },
+    "miercoles": { "almuerzo": { "nombre": "...", "tiempo_estimado": 30 }, "cena": { "nombre": "...", "tiempo_estimado": 20 } },
+    "jueves": { "almuerzo": { "nombre": "...", "tiempo_estimado": 30 }, "cena": { "nombre": "...", "tiempo_estimado": 20 } },
+    "viernes": { "almuerzo": { "nombre": "...", "tiempo_estimado": 30 }, "cena": { "nombre": "...", "tiempo_estimado": 20 } },
+    "sabado": { "almuerzo": { "nombre": "...", "tiempo_estimado": 30 }, "cena": { "nombre": "...", "tiempo_estimado": 20 } },
+    "domingo": { "almuerzo": { "nombre": "...", "tiempo_estimado": 30 }, "cena": { "nombre": "...", "tiempo_estimado": 20 } }
   }
-}`;
+}
+Las claves de "dias" deben ser exactamente: lunes, martes, miercoles, jueves, viernes, sabado, domingo (sin acentos).`;
 }
 
 function construirPromptRefinamiento(menuActual, mensajeUsuario, perfil) {
@@ -119,9 +118,7 @@ async function generarYEnviarMenu(ctx, chatId, perfil) {
   let menuData;
   try {
     const prompt = construirPromptMenu(perfil);
-    const respuesta = await llamarLLM(prompt);
-    menuData = parsearJSON(respuesta);
-    validarMenu(menuData);
+    menuData = await llamarLLMConJSON(prompt, undefined, validarMenu, 2);
   } catch (error) {
     console.error('[Menu] Error generando menú:', error.message);
     await ctx.reply('Hubo un problema generando tu menú. Por favor intentá de nuevo en unos minutos.');
@@ -199,9 +196,7 @@ async function refinarMenu(ctx, mensajeUsuario) {
   let menuActualizado;
   try {
     const prompt = construirPromptRefinamiento(menu, mensajeUsuario, perfil);
-    const respuesta = await llamarLLM(prompt);
-    menuActualizado = parsearJSON(respuesta);
-    validarMenu(menuActualizado);
+    menuActualizado = await llamarLLMConJSON(prompt, undefined, validarMenu);
   } catch (error) {
     console.error('[Menu] Error refinando menú:', error.message);
     await ctx.reply('No pude procesar ese cambio. Probá ser más específico, por ejemplo: "Cambiá la cena del martes" o "El jueves tengo poco tiempo".');

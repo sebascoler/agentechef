@@ -23,6 +23,12 @@ const { semanaISOActual } = require('../src/utils/dateHelper');
 // Inicializar Firebase al arrancar
 inicializarFirebase();
 
+console.log('[AgentChef] Proveedores IA:', {
+  gemini: Boolean(process.env.GEMINI_API_KEY?.trim()),
+  openai: Boolean(process.env.OPENAI_API_KEY?.trim()),
+  geminiModel: process.env.GEMINI_MODEL?.trim() || 'auto (lite → 2.5-flash → latest)',
+});
+
 // Crear instancia del bot
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
