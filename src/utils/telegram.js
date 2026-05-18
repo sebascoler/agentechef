@@ -13,7 +13,7 @@ async function replyMarkdownV2(ctx, texto, opciones = {}) {
     return await ctx.reply(texto, { parse_mode: 'MarkdownV2', ...opciones });
   } catch (error) {
     const msg = error.message || '';
-    if (msg.includes("can't parse entities") || msg.includes('Bad Request')) {
+    if (msg.includes("can't parse entities")) {
       console.warn('[Telegram] MarkdownV2 inválido, reenviando sin formato:', msg.slice(0, 120));
       const { parse_mode, ...resto } = opciones;
       return ctx.reply(desescaparMarkdownV2(texto), resto);

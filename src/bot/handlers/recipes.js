@@ -133,26 +133,26 @@ async function mostrarListaRecetas(ctx) {
     return;
   }
 
-  // Recolectar todos los platos únicos
-  const platos = [];
-  for (const dia of DIAS_ORDEN) {
-    const datos = menu.dias[dia];
-    if (!datos) continue;
-    if (datos.almuerzo?.nombre) platos.push(datos.almuerzo.nombre);
-    if (datos.cena?.nombre) platos.push(datos.cena.nombre);
-  }
+  const platos = recolectarPlatosDelMenu(menu);
 
   if (platos.length === 0) {
     await ctx.reply('No hay platos en el menú de esta semana.');
     return;
   }
 
-  // Crear botones inline (máx 2 por fila)
+  // Telegram: callback_data máximo 64 bytes — usamos id corto, no el nombre completo
   const botones = [];
   for (let i = 0; i < platos.length; i += 2) {
-    const fila = [Markup.button.callback(`🍽️ ${truncar(platos[i], 28)}`, `receta:${platos[i]}`)];
+    const fila = [
+      Markup.button.callback(`🍽️ ${truncar(platos[i].nombre, 28)}`, `receta:${platos[i].id}`),
+    ];
     if (platos[i + 1]) {
-      fila.push(Markup.button.callback(`🍽️ ${truncar(platos[i + 1], 28)}`, `receta:${platos[i + 1]}`));
+      fila.push(
+        Markup.button.callback(
+          `🍽️ ${truncar(platos[i + 1].nombre, 28)}`,
+          `receta:${platos[i + 1].id}`
+        )
+      );
     }
     botones.push(fila);
   }
@@ -168,9 +168,66 @@ async function manejarCallbackReceta(ctx) {
   const data = ctx.callbackQuery.data;
   if (!data.startsWith('receta:')) return;
 
-  const nombrePlato = data.slice('receta:'.length);
+  const recetaId = data.slice('receta:'.length);
+  const chatId = ctx.chat.id;
+
+  let nombrePlato;
+  try {
+    nombrePlato = await resolverNombrePlatoPorId(chatId, recetaId);
+  } catch (e) {
+    await ctx.answerCbQuery({ text: 'Error buscando el plato', show_alert: true });
+    return;
+  }
+
+  if (!nombrePlato) {
+    await ctx.answerCbQuery({ text: 'No encontré ese plato en tu menú', show_alert: true });
+    return;
+  }
+
   await ctx.answerCbQuery();
   await mostrarReceta(ctx, nombrePlato);
+}
+
+function recolectarPlatosDelMenu(menu) {
+  const vistos = new Set();
+  const platos = [];
+
+  for (const dia of DIAS_ORDEN) {
+    const datos = menu.dias[dia];
+    if (!datos) continue;
+
+    for (const comida of [datos.almuerzo, datos.cena]) {
+      if (!comida?.nombre) continue;
+      const id = generarIdReceta(comida.nombre);
+      if (vistos.has(id)) continue;
+      vistos.add(id);
+      platos.push({ id, nombre: comida.nombre });
+    }
+  }
+
+  return platos;
+}
+
+async function resolverNombrePlatoPorId(chatId, recetaId) {
+  const semana = semanaISOActual();
+  const menu = await obtenerMenu(chatId, semana);
+
+  if (menu?.dias) {
+    for (const dia of DIAS_ORDEN) {
+      const datos = menu.dias[dia];
+      if (!datos) continue;
+      for (const comida of [datos.almuerzo, datos.cena]) {
+        if (comida?.nombre && generarIdReceta(comida.nombre) === recetaId) {
+          return comida.nombre;
+        }
+      }
+    }
+  }
+
+  const receta = await obtenerReceta(chatId, recetaId);
+  if (receta?.nombre) return receta.nombre;
+
+  return null;
 }
 
 function truncar(texto, max) {
